@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Search, MapPin, Sparkles, Loader2, ExternalLink, Zap } from 'lucide-react';
+import { Sparkles, Plus, Settings2, ChevronDown, Mic, Search, MapPin, Loader2, ExternalLink, Zap, Building2, Users } from 'lucide-react';
 
 export default function Home() {
     const [loading, setLoading] = useState(false);
@@ -10,12 +10,12 @@ export default function Home() {
 
     const runScraper = async () => {
         if (!industry || !location) {
-            setStatus("Please enter both industry and location");
+            setStatus("error:Please enter both industry and location");
             return;
         }
 
         setLoading(true);
-        setStatus("🔄 Waking up server (this may take 50s on free tier)...");
+        setStatus("pending:Waking up server (this may take 50s)...");
 
         const API_URL = "https://b2b-scraper-4nme.onrender.com";
 
@@ -33,115 +33,145 @@ export default function Home() {
             const data = await res.json();
 
             if (res.ok) {
-                setStatus(`✅ Scraping ${industry} in ${location}... Check your sheet in 60s!`);
+                setStatus(`success:Scraping ${industry} in ${location}... Check your sheet in 60s!`);
                 setResultLink("https://docs.google.com/spreadsheets/u/0/");
             } else {
-                setStatus("❌ Error: " + data.detail);
+                setStatus("error:" + data.detail);
             }
         } catch (e) {
-            setStatus("❌ Failed to connect. Is the server running?");
+            setStatus("error:Failed to connect. Is the server running?");
         } finally {
             setLoading(false);
         }
     };
 
+    const quickFill = (ind, loc) => {
+        setIndustry(ind);
+        setLocation(loc);
+    };
+
+    const getStatusClass = () => {
+        if (status.startsWith('success:')) return 'status-success';
+        if (status.startsWith('error:')) return 'status-error';
+        return 'status-pending';
+    };
+
+    const getStatusText = () => {
+        return status.replace(/^(success:|error:|pending:)/, '');
+    };
+
     return (
-        <div className="min-h-screen flex items-center justify-center p-6 relative">
-            {/* Animated background orbs */}
-            <div className="bg-orb bg-orb-1"></div>
-            <div className="bg-orb bg-orb-2"></div>
-            <div className="bg-orb bg-orb-3"></div>
-
-            {/* Main card */}
-            <div className="glass-card w-full max-w-lg p-8 md:p-10 relative z-10">
-                {/* Header */}
-                <div className="text-center mb-10">
-                    <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-gradient-to-br from-[#00f5a0] to-[#00d9f5] mb-6 shadow-lg shadow-[#00f5a0]/30">
-                        <Zap className="w-8 h-8 text-black" />
-                    </div>
-                    <h1 className="text-3xl md:text-4xl font-bold text-white mb-3 tracking-tight">
-                        Lead Finder
-                    </h1>
-                    <p className="text-gray-400 text-sm md:text-base">
-                        Turn Google Maps into actionable leads in seconds
-                    </p>
+        <div className="main-container">
+            {/* Header */}
+            <div className="header">
+                <div className="greeting">
+                    <Sparkles className="greeting-icon" style={{ color: '#4285f4' }} />
+                    <span className="greeting-text">Lead Finder</span>
                 </div>
-
-                {/* Form */}
-                <div className="space-y-5">
-                    {/* Industry Input */}
-                    <div>
-                        <label className="floating-label">Industry / Business Type</label>
-                        <div className="premium-input flex items-center">
-                            <Search className="input-icon icon-green" />
-                            <input
-                                type="text"
-                                value={industry}
-                                onChange={(e) => setIndustry(e.target.value)}
-                                placeholder="e.g. Dentists, Plumbers, Lawyers"
-                            />
-                        </div>
-                    </div>
-
-                    {/* Location Input */}
-                    <div>
-                        <label className="floating-label">Target Location</label>
-                        <div className="premium-input flex items-center">
-                            <MapPin className="input-icon icon-blue" />
-                            <input
-                                type="text"
-                                value={location}
-                                onChange={(e) => setLocation(e.target.value)}
-                                placeholder="e.g. Miami, FL or Chicago"
-                            />
-                        </div>
-                    </div>
-
-                    {/* Submit Button */}
-                    <button
-                        onClick={runScraper}
-                        disabled={loading}
-                        className={`gradient-btn w-full flex items-center justify-center gap-3 mt-8 ${loading ? 'loading-pulse' : ''}`}
-                    >
-                        {loading ? (
-                            <>
-                                <Loader2 className="w-5 h-5 animate-spin" />
-                                <span>Scraping...</span>
-                            </>
-                        ) : (
-                            <>
-                                <Sparkles className="w-5 h-5" />
-                                <span>Find Leads</span>
-                            </>
-                        )}
-                    </button>
-                </div>
-
-                {/* Status Terminal */}
-                {status && (
-                    <div className="terminal mt-8">
-                        <p className={`text-sm ${status.includes('❌') ? 'text-red-400' : status.includes('✅') ? 'text-green-400' : 'text-yellow-400'}`}>
-                            {status}
-                        </p>
-                        {resultLink && (
-                            <a
-                                href={resultLink}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="inline-flex items-center gap-2 mt-3 text-[#00d9f5] hover:text-[#00f5a0] transition-colors text-sm"
-                            >
-                                <ExternalLink className="w-4 h-4" />
-                                Open Google Sheets
-                            </a>
-                        )}
-                    </div>
-                )}
-
-                {/* Footer */}
-                <p className="text-center text-gray-600 text-xs mt-8">
-                    Powered by Apify • Results delivered to Google Sheets
-                </p>
+                <h1 className="headline">What leads can I find for you?</h1>
             </div>
+
+            {/* Main Input Container */}
+            <div className="input-container">
+                <input
+                    type="text"
+                    className="input-field"
+                    placeholder="Enter industry and location (e.g. Plumbers in Miami)"
+                    value={industry && location ? `${industry} in ${location}` : industry || ''}
+                    onChange={(e) => {
+                        const val = e.target.value;
+                        if (val.includes(' in ')) {
+                            const parts = val.split(' in ');
+                            setIndustry(parts[0]);
+                            setLocation(parts.slice(1).join(' in '));
+                        } else {
+                            setIndustry(val);
+                            setLocation('');
+                        }
+                    }}
+                />
+
+                {/* Toolbar */}
+                <div className="toolbar">
+                    <div className="toolbar-left">
+                        <button className="toolbar-btn">
+                            <Plus size={18} />
+                        </button>
+                        <button className="toolbar-btn">
+                            <Settings2 size={18} />
+                            <span>Tools</span>
+                        </button>
+                    </div>
+                    <div className="toolbar-right">
+                        <button className="model-selector">
+                            <span>Pro</span>
+                            <ChevronDown size={16} />
+                        </button>
+                        <button
+                            className="mic-btn"
+                            onClick={runScraper}
+                            disabled={loading || (!industry && !location)}
+                            style={loading ? { background: '#4285f4' } : {}}
+                        >
+                            {loading ? <Loader2 size={20} className="animate-spin" /> : <Zap size={20} />}
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            {/* Quick Action Pills */}
+            <div className="action-pills">
+                <button className="pill" onClick={() => quickFill('Dentists', 'Los Angeles, CA')}>
+                    <Building2 className="pill-icon" />
+                    <span>Dentists in LA</span>
+                </button>
+                <button className="pill" onClick={() => quickFill('Plumbers', 'Chicago, IL')}>
+                    <Users className="pill-icon" />
+                    <span>Plumbers in Chicago</span>
+                </button>
+                <button className="pill" onClick={() => quickFill('HVAC', 'Miami, FL')}>
+                    <Search className="pill-icon" />
+                    <span>HVAC in Miami</span>
+                </button>
+                <button className="pill" onClick={() => quickFill('Lawyers', 'New York, NY')}>
+                    <MapPin className="pill-icon" />
+                    <span>Lawyers in NYC</span>
+                </button>
+            </div>
+
+            {/* Primary Action Button */}
+            <button
+                className="primary-btn"
+                onClick={runScraper}
+                disabled={loading || !industry || !location}
+            >
+                {loading ? (
+                    <>
+                        <Loader2 size={20} className="animate-spin" />
+                        <span>Finding leads...</span>
+                    </>
+                ) : (
+                    <>
+                        <Zap size={20} />
+                        <span>Find Leads</span>
+                    </>
+                )}
+            </button>
+
+            {/* Status Message */}
+            {status && (
+                <div className="status-message">
+                    <p className={getStatusClass()}>
+                        {getStatusText()}
+                    </p>
+                    {resultLink && (
+                        <a href={resultLink} target="_blank" rel="noopener noreferrer" className="status-link">
+                            <ExternalLink size={14} />
+                            Open Google Sheets
+                        </a>
+                    )}
+                </div>
+            )}
         </div>
     );
 }
