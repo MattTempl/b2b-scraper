@@ -38,8 +38,10 @@ async def run_lead_gen(request: LeadGenRequest):
     try:
         query = f"{request.industry} in {request.location}"
         
-        # We define a sheet name based on the query to keep things organized
-        sheet_name = f"Leads: {query}"
+        # USE A MASTER SHEET
+        # Creating new sheets with a Service Account makes them hidden/private.
+        # Instead, we overwrite a single shared sheet so the user can actually see it.
+        sheet_name = "B2B Scraper Results"
         
         # Prepare environment
         env = os.environ.copy()
