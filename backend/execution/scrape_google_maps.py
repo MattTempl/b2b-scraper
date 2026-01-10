@@ -13,8 +13,10 @@ from pathlib import Path
 from dotenv import load_dotenv
 from apify_client import ApifyClient
 
-# Load environment variables
-load_dotenv(Path(__file__).parent.parent / ".env")
+# Load environment variables (optional - Render sets them directly)
+env_path = Path(__file__).parent.parent / ".env"
+if env_path.exists():
+    load_dotenv(env_path)
 
 # Ensure .tmp directory exists
 TMP_DIR = Path(__file__).parent.parent / ".tmp"
