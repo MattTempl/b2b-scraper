@@ -1,0 +1,10 @@
+playwright
+beautifulsoup4
+requests
+gspread
+oauth2client
+dnspython
+lxml
+apify-client
+python-dotenv
+haversine

@@ -1,0 +1,11 @@
+playwright
+beautifulsouplaywright
+haversine
+gspread
+google-auth-oauthlib
+google-auth
+apify-client
+python-dotenv
+fastapi
+uvicorn
+haversine
