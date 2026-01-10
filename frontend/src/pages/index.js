@@ -1,18 +1,22 @@
 import React, { useState } from 'react';
-import { Play, MapPin, Calendar, Loader2 } from 'lucide-react';
+import { Search, MapPin, Sparkles, Loader2, ExternalLink, Zap } from 'lucide-react';
 
 export default function Home() {
     const [loading, setLoading] = useState(false);
-    const [status, setStatus] = useState("Idle");
+    const [status, setStatus] = useState("");
     const [resultLink, setResultLink] = useState("");
-    const [industry, setIndustry] = useState("Plumbers");
-    const [location, setLocation] = useState("Los Angeles, CA");
+    const [industry, setIndustry] = useState("");
+    const [location, setLocation] = useState("");
 
     const runScraper = async () => {
-        setLoading(true);
-        setStatus("Waking up server (this may take 50s)...");
+        if (!industry || !location) {
+            setStatus("Please enter both industry and location");
+            return;
+        }
 
-        // Hardcoded for stability
+        setLoading(true);
+        setStatus("🔄 Waking up server (this may take 50s on free tier)...");
+
         const API_URL = "https://b2b-scraper-4nme.onrender.com";
 
         try {
@@ -29,87 +33,114 @@ export default function Home() {
             const data = await res.json();
 
             if (res.ok) {
-                setStatus(`Job Started! Scraping ${industry} in ${location}...`);
-                // Mocking the result link for immediate gratification in this MVP
-                // In real life, we'd poll for completion.
-                // We use the same sheet URL because push_to_sheets.py outputs to a single spreadsheet (or creates new ones).
-                // Since we don't have the dynamic sheet ID here without polling, we can link to the Sheets home or the likely URL if known.
-                // For MVP, assume one main sheet or user checks their Drive.
+                setStatus(`✅ Scraping ${industry} in ${location}... Check your sheet in 60s!`);
                 setResultLink("https://docs.google.com/spreadsheets/u/0/");
             } else {
-                setStatus("Error: " + data.detail);
+                setStatus("❌ Error: " + data.detail);
             }
         } catch (e) {
-            setStatus("Error: Failed to connect to backend. Is it running?");
+            setStatus("❌ Failed to connect. Is the server running?");
         } finally {
             setLoading(false);
         }
     };
 
     return (
-        <div className="min-h-screen bg-black text-gray-100 font-sans p-8 flex flex-col items-center justify-center">
-            <div className="max-w-md w-full bg-gray-900 border border-gray-800 rounded-2xl p-8 shadow-2xl">
-                <div className="mb-8 text-center">
-                    <h1 className="text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-green-400 to-blue-500">
-                        B2B Lead Scraper
+        <div className="min-h-screen flex items-center justify-center p-6 relative">
+            {/* Animated background orbs */}
+            <div className="bg-orb bg-orb-1"></div>
+            <div className="bg-orb bg-orb-2"></div>
+            <div className="bg-orb bg-orb-3"></div>
+
+            {/* Main card */}
+            <div className="glass-card w-full max-w-lg p-8 md:p-10 relative z-10">
+                {/* Header */}
+                <div className="text-center mb-10">
+                    <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-gradient-to-br from-[#00f5a0] to-[#00d9f5] mb-6 shadow-lg shadow-[#00f5a0]/30">
+                        <Zap className="w-8 h-8 text-black" />
+                    </div>
+                    <h1 className="text-3xl md:text-4xl font-bold text-white mb-3 tracking-tight">
+                        Lead Finder
                     </h1>
-                    <p className="text-gray-500 mt-2 text-sm">Convert Google Maps into Leads</p>
+                    <p className="text-gray-400 text-sm md:text-base">
+                        Turn Google Maps into actionable leads in seconds
+                    </p>
                 </div>
 
-                <div className="space-y-4">
-                    <div className="space-y-2">
-                        <label className="text-xs font-mono text-gray-400">INDUSTRY / KEYWORD</label>
-                        <div className="flex items-center bg-gray-800 rounded-lg px-4 py-3 border border-gray-700">
-                            <Play className="w-5 h-5 text-green-400 mr-3" />
+                {/* Form */}
+                <div className="space-y-5">
+                    {/* Industry Input */}
+                    <div>
+                        <label className="floating-label">Industry / Business Type</label>
+                        <div className="premium-input flex items-center">
+                            <Search className="input-icon icon-green" />
                             <input
                                 type="text"
                                 value={industry}
                                 onChange={(e) => setIndustry(e.target.value)}
-                                className="bg-transparent w-full outline-none text-white placeholder-gray-600"
-                                placeholder="e.g. Dentists, HVAC, Lawyers"
+                                placeholder="e.g. Dentists, Plumbers, Lawyers"
                             />
                         </div>
                     </div>
 
-                    <div className="space-y-2">
-                        <label className="text-xs font-mono text-gray-400">LOCATION</label>
-                        <div className="flex items-center bg-gray-800 rounded-lg px-4 py-3 border border-gray-700">
-                            <MapPin className="w-5 h-5 text-blue-400 mr-3" />
+                    {/* Location Input */}
+                    <div>
+                        <label className="floating-label">Target Location</label>
+                        <div className="premium-input flex items-center">
+                            <MapPin className="input-icon icon-blue" />
                             <input
                                 type="text"
                                 value={location}
                                 onChange={(e) => setLocation(e.target.value)}
-                                className="bg-transparent w-full outline-none text-white"
-                                placeholder="e.g. New York, NY"
+                                placeholder="e.g. Miami, FL or Chicago"
                             />
                         </div>
                     </div>
 
+                    {/* Submit Button */}
                     <button
                         onClick={runScraper}
                         disabled={loading}
-                        className={`w-full mt-6 py-4 rounded-xl font-bold text-lg flex items-center justify-center transition-all ${loading
-                            ? 'bg-gray-700 cursor-not-allowed text-gray-400'
-                            : 'bg-gradient-to-r from-green-600 to-blue-600 hover:scale-[1.02] shadow-lg shadow-green-500/20'
-                            }`}
+                        className={`gradient-btn w-full flex items-center justify-center gap-3 mt-8 ${loading ? 'loading-pulse' : ''}`}
                     >
-                        {loading ? <Loader2 className="w-6 h-6 animate-spin" /> : <Play className="w-5 h-5 mr-2 fill-current" />}
-                        {loading ? "SCRAPING..." : "FIND LEADS"}
+                        {loading ? (
+                            <>
+                                <Loader2 className="w-5 h-5 animate-spin" />
+                                <span>Scraping...</span>
+                            </>
+                        ) : (
+                            <>
+                                <Sparkles className="w-5 h-5" />
+                                <span>Find Leads</span>
+                            </>
+                        )}
                     </button>
                 </div>
 
-                {status !== "Idle" && (
-                    <div className="mt-8 p-4 bg-black/50 rounded-lg border border-gray-800 font-mono text-sm">
-                        <p className={status.includes('Error') ? 'text-red-400' : 'text-green-400'}>
-                            &gt; {status}
+                {/* Status Terminal */}
+                {status && (
+                    <div className="terminal mt-8">
+                        <p className={`text-sm ${status.includes('❌') ? 'text-red-400' : status.includes('✅') ? 'text-green-400' : 'text-yellow-400'}`}>
+                            {status}
                         </p>
                         {resultLink && (
-                            <div className="mt-2 text-blue-400 break-all">
-                                <a href={resultLink} target="_blank" className="underline hover:text-blue-300">Open Google Sheets</a>
-                            </div>
+                            <a
+                                href={resultLink}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="inline-flex items-center gap-2 mt-3 text-[#00d9f5] hover:text-[#00f5a0] transition-colors text-sm"
+                            >
+                                <ExternalLink className="w-4 h-4" />
+                                Open Google Sheets
+                            </a>
                         )}
                     </div>
                 )}
+
+                {/* Footer */}
+                <p className="text-center text-gray-600 text-xs mt-8">
+                    Powered by Apify • Results delivered to Google Sheets
+                </p>
             </div>
         </div>
     );
