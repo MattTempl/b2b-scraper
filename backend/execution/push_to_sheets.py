@@ -85,18 +85,18 @@ def create_or_open_sheet(client, sheet_name: str):
     timestamp = datetime.now().strftime("%Y-%m-%d %H:%M")
     unique_name = f"{sheet_name} - {timestamp}"
     
+    # Create the sheet
+    print(f"[*] Creating sheet: {unique_name}")
+    sheet = client.create(unique_name)
+    print(f"[*] Created new sheet: {unique_name}")
+    
+    # Make the sheet publicly viewable (anyone with link can view)
     try:
-        sheet = client.create(unique_name)
-        print(f"[*] Created new sheet: {unique_name}")
-        
-        # Make the sheet publicly viewable (anyone with link can view)
         sheet.share(None, perm_type='anyone', role='reader')
         print(f"[*] Made sheet public: {sheet.url}")
-        
     except Exception as e:
-        print(f"[!] Error creating sheet: {e}")
-        # Fallback: try to open existing
-        sheet = client.open(sheet_name)
+        print(f"[!] Warning: Could not make sheet public: {e}")
+        print(f"[*] Sheet URL (private): {sheet.url}")
     
     return sheet
 
