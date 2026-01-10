@@ -41,7 +41,7 @@ export default function Home() {
                 body: JSON.stringify({
                     industry: industry,
                     location: location,
-                    limit: 50
+                    limit: 5
                 })
             });
 
