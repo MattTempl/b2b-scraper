@@ -1,5 +1,5 @@
 playwright
-beautifulsouplaywright
+beautifulsoup4
 haversine
 gspread
 google-auth-oauthlib
