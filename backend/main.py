@@ -129,6 +129,24 @@ async def debug_sheet():
     except Exception as e:
         return {"status": "Critical Error", "message": str(e)}
 
+@app.get("/api/test-sheet-write")
+async def test_sheet_write_endpoint():
+    """Trigger a dummy data write to verify permissions."""
+    try:
+        current_dir = os.path.dirname(os.path.abspath(__file__))
+        script_path = os.path.join(current_dir, "test_sheet_render.py")
+        
+        cmd = ["python3", script_path]
+        result = subprocess.run(cmd, capture_output=True, text=True, env=os.environ.copy())
+        
+        return {
+            "stdout": result.stdout,
+            "stderr": result.stderr,
+            "returncode": result.returncode
+        }
+    except Exception as e:
+        return {"error": str(e)}
+
 @app.post("/api/run-venue-finder")
 async def run_venue_finder(request: VenueSearchRequest):
     """
