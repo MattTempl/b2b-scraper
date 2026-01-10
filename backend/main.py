@@ -81,6 +81,54 @@ async def run_lead_gen(request: LeadGenRequest):
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
+@app.get("/api/debug-sheet")
+async def debug_sheet():
+    """Debug endpoint to check Google Sheets access on Render."""
+    try:
+        import gspread
+        import json
+        
+        # 1. Check Env Var
+        creds_json = os.environ.get('GOOGLE_CREDENTIALS')
+        if not creds_json:
+            return {"status": "Error", "message": "GOOGLE_CREDENTIALS env var is MISSING"}
+            
+        # 2. Parse JSON
+        try:
+            creds_dict = json.loads(creds_json)
+            client_email = creds_dict.get('client_email', 'UNKNOWN')
+        except json.JSONDecodeError:
+             return {"status": "Error", "message": "GOOGLE_CREDENTIALS is not valid JSON"}
+
+        # 3. Authenticate
+        try:
+            gc = gspread.service_account_from_dict(creds_dict)
+            client = gc
+        except Exception as e:
+            return {"status": "Error", "message": f"Auth failed: {str(e)}"}
+
+        # 4. Try Master Sheet
+        try:
+            sheet = client.open("B2B Scraper Results")
+            return {
+                "status": "Success", 
+                "message": "Connected to sheet!",
+                "sheet_title": sheet.title,
+                "sheet_url": sheet.url,
+                "authenticated_as": client_email
+            }
+        except gspread.SpreadsheetNotFound:
+            return {
+                "status": "Error", 
+                "message": f"Sheet 'B2B Scraper Results' NOT FOUND for user {client_email}. Did you share it?",
+                "authenticated_as": client_email
+            }
+        except Exception as e:
+            return {"status": "Error", "message": f"Open failed: {str(e)}", "authenticated_as": client_email}
+
+    except Exception as e:
+        return {"status": "Critical Error", "message": str(e)}
+
 @app.post("/api/run-venue-finder")
 async def run_venue_finder(request: VenueSearchRequest):
     """
