@@ -162,6 +162,10 @@ Examples:
         input_file = str(TMP_DIR / "emails_found.json")
     
     if not args.skip_sheets:
+        print(f"[*] Pushing to Sheets using file: {input_file}")
+        with open(input_file, 'r') as f:
+            print(f"[*] File size: {len(f.read())} bytes")
+            
         success = run_step(
             "Google Sheets Export",
             [sys.executable, str(PUSH_SHEETS), "--input", input_file, "--sheet", sheet_name]

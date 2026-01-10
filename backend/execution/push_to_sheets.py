@@ -124,6 +124,7 @@ def push_to_sheets(leads: list, sheet_name: str) -> str:
         URL of the created/updated sheet
     """
     print(f"[*] Pushing {len(leads)} leads to Google Sheets...")
+    print(f"[*] Target Sheet: {sheet_name}")
     
     client = get_gspread_client()
     spreadsheet = create_or_open_sheet(client, sheet_name)
