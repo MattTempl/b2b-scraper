@@ -102,9 +102,12 @@ async def run_venue_finder(request: VenueSearchRequest):
         # You would update find_venues.py to read these if dynamic
         # env['SEARCH_LOCATION'] = request.location
         
+        # Absolute path fix for this endpoint too
+        current_dir = os.path.dirname(os.path.abspath(__file__))
+        script_path = os.path.join(current_dir, "execution", "find_venues.py")
+
         process = subprocess.Popen(
-            ["python3", "execution/find_venues.py"],
-            cwd="backend", # Run from backend dir so paths align
+            ["python3", script_path],
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
             env=env
