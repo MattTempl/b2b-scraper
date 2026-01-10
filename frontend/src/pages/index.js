@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Sparkles, Plus, Settings2, ChevronDown, Mic, Search, MapPin, Loader2, ExternalLink, Zap, Building2, Users } from 'lucide-react';
+import { Loader2, ArrowRight, ExternalLink } from 'lucide-react';
 
 export default function Home() {
     const [loading, setLoading] = useState(false);
@@ -10,12 +10,12 @@ export default function Home() {
 
     const runScraper = async () => {
         if (!industry || !location) {
-            setStatus("error:Please enter both industry and location");
+            setStatus("Please enter both industry and location");
             return;
         }
 
         setLoading(true);
-        setStatus("pending:Waking up server (this may take 50s)...");
+        setStatus("Approaching server...");
 
         const API_URL = "https://b2b-scraper-4nme.onrender.com";
 
@@ -33,145 +33,107 @@ export default function Home() {
             const data = await res.json();
 
             if (res.ok) {
-                setStatus(`success:Scraping ${industry} in ${location}... Check your sheet in 60s!`);
+                setStatus(`Search started for ${industry} in ${location}.`);
                 setResultLink("https://docs.google.com/spreadsheets/u/0/");
             } else {
-                setStatus("error:" + data.detail);
+                setStatus("Error: " + data.detail);
             }
         } catch (e) {
-            setStatus("error:Failed to connect. Is the server running?");
+            setStatus("Connection failed. Server may be sleeping.");
         } finally {
             setLoading(false);
         }
     };
 
-    const quickFill = (ind, loc) => {
-        setIndustry(ind);
-        setLocation(loc);
-    };
-
-    const getStatusClass = () => {
-        if (status.startsWith('success:')) return 'status-success';
-        if (status.startsWith('error:')) return 'status-error';
-        return 'status-pending';
-    };
-
-    const getStatusText = () => {
-        return status.replace(/^(success:|error:|pending:)/, '');
-    };
-
     return (
-        <div className="main-container">
-            {/* Header */}
-            <div className="header">
-                <div className="greeting">
-                    <Sparkles className="greeting-icon" style={{ color: '#4285f4' }} />
-                    <span className="greeting-text">Lead Finder</span>
+        <div className="min-h-screen flex flex-col items-center justify-center p-6 animate-fade-in text-center">
+
+            {/* Hero Section */}
+            <div className="max-w-xl w-full mb-12">
+                <h1 className="text-[42px] md:text-[52px] font-light tracking-tight text-[#edEEF0] mb-3 leading-[1.1]">
+                    Where should we start?
+                </h1>
+                <p className="text-[#8E8E93] text-lg font-light">
+                    Generate verified B2B leads in seconds.
+                </p>
+            </div>
+
+            {/* Form Section */}
+            <div className="w-full max-w-[400px] flex flex-col gap-6">
+
+                {/* Input 1 */}
+                <div className="text-left">
+                    <label className="gemini-label">INDUSTRY / BUSINESS TYPE</label>
+                    <input
+                        type="text"
+                        value={industry}
+                        onChange={(e) => setIndustry(e.target.value)}
+                        className="gemini-input"
+                        placeholder="e.g. Dentists, SaaS, Plumbers"
+                    />
                 </div>
-                <h1 className="headline">What leads can I find for you?</h1>
-            </div>
 
-            {/* Main Input Container */}
-            <div className="input-container">
-                <input
-                    type="text"
-                    className="input-field"
-                    placeholder="Enter industry and location (e.g. Plumbers in Miami)"
-                    value={industry && location ? `${industry} in ${location}` : industry || ''}
-                    onChange={(e) => {
-                        const val = e.target.value;
-                        if (val.includes(' in ')) {
-                            const parts = val.split(' in ');
-                            setIndustry(parts[0]);
-                            setLocation(parts.slice(1).join(' in '));
-                        } else {
-                            setIndustry(val);
-                            setLocation('');
-                        }
-                    }}
-                />
-
-                {/* Toolbar */}
-                <div className="toolbar">
-                    <div className="toolbar-left">
-                        <button className="toolbar-btn">
-                            <Plus size={18} />
-                        </button>
-                        <button className="toolbar-btn">
-                            <Settings2 size={18} />
-                            <span>Tools</span>
-                        </button>
-                    </div>
-                    <div className="toolbar-right">
-                        <button className="model-selector">
-                            <span>Pro</span>
-                            <ChevronDown size={16} />
-                        </button>
-                        <button
-                            className="mic-btn"
-                            onClick={runScraper}
-                            disabled={loading || (!industry && !location)}
-                            style={loading ? { background: '#4285f4' } : {}}
-                        >
-                            {loading ? <Loader2 size={20} className="animate-spin" /> : <Zap size={20} />}
-                        </button>
-                    </div>
+                {/* Input 2 */}
+                <div className="text-left">
+                    <label className="gemini-label">TARGET LOCATION</label>
+                    <input
+                        type="text"
+                        value={location}
+                        onChange={(e) => setLocation(e.target.value)}
+                        className="gemini-input"
+                        placeholder="e.g. Austin, TX"
+                    />
                 </div>
-            </div>
 
-            {/* Quick Action Pills */}
-            <div className="action-pills">
-                <button className="pill" onClick={() => quickFill('Dentists', 'Los Angeles, CA')}>
-                    <Building2 className="pill-icon" />
-                    <span>Dentists in LA</span>
-                </button>
-                <button className="pill" onClick={() => quickFill('Plumbers', 'Chicago, IL')}>
-                    <Users className="pill-icon" />
-                    <span>Plumbers in Chicago</span>
-                </button>
-                <button className="pill" onClick={() => quickFill('HVAC', 'Miami, FL')}>
-                    <Search className="pill-icon" />
-                    <span>HVAC in Miami</span>
-                </button>
-                <button className="pill" onClick={() => quickFill('Lawyers', 'New York, NY')}>
-                    <MapPin className="pill-icon" />
-                    <span>Lawyers in NYC</span>
-                </button>
-            </div>
+                {/* Spacer */}
+                <div className="h-2"></div>
 
-            {/* Primary Action Button */}
-            <button
-                className="primary-btn"
-                onClick={runScraper}
-                disabled={loading || !industry || !location}
-            >
-                {loading ? (
-                    <>
-                        <Loader2 size={20} className="animate-spin" />
-                        <span>Finding leads...</span>
-                    </>
-                ) : (
-                    <>
-                        <Zap size={20} />
-                        <span>Find Leads</span>
-                    </>
-                )}
-            </button>
-
-            {/* Status Message */}
-            {status && (
-                <div className="status-message">
-                    <p className={getStatusClass()}>
-                        {getStatusText()}
-                    </p>
-                    {resultLink && (
-                        <a href={resultLink} target="_blank" rel="noopener noreferrer" className="status-link">
-                            <ExternalLink size={14} />
-                            Open Google Sheets
-                        </a>
+                {/* CTA Button */}
+                <button
+                    onClick={runScraper}
+                    disabled={loading}
+                    className="gemini-btn flex items-center justify-center gap-2"
+                >
+                    {loading ? (
+                        <>
+                            <Loader2 className="w-5 h-5 animate-spin" />
+                            <span>Processing...</span>
+                        </>
+                    ) : (
+                        <>
+                            <span>Find Leads</span>
+                            <ArrowRight className="w-4 h-4" />
+                        </>
                     )}
-                </div>
-            )}
+                </button>
+
+                {/* Minimal Status Message */}
+                {status && (
+                    <div className="mt-4 text-sm font-medium animate-fade-in">
+                        <span className={status.includes('Error') || status.includes('failed') ? "text-red-400" : "text-[#edEEF0]"}>
+                            {status}
+                        </span>
+                        {resultLink && (
+                            <div className="mt-2">
+                                <a
+                                    href={resultLink}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="text-[#8E8E93] hover:text-[#edEEF0] underline transition-colors inline-flex items-center gap-1"
+                                >
+                                    Open Google Sheets <ExternalLink className="w-3 h-3" />
+                                </a>
+                            </div>
+                        )}
+                    </div>
+                )}
+            </div>
+
+            {/* Footer */}
+            <div className="fixed bottom-6 text-[#444446] text-xs">
+                AI Native Lead Generation
+            </div>
+
         </div>
     );
 }
