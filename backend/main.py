@@ -59,7 +59,6 @@ async def run_lead_gen(request: LeadGenRequest):
         
         process = subprocess.Popen(
             cmd,
-            cwd="backend", # Run from backend dir
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
             env=env
