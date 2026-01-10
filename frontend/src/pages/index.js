@@ -1,21 +1,33 @@
-import React, { useState } from 'react';
-import { Loader2, Sparkles, ExternalLink } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Loader2, Sparkles, ExternalLink, CheckCircle, Clock } from 'lucide-react';
 
 export default function Home() {
     const [loading, setLoading] = useState(false);
+    const [jobStarted, setJobStarted] = useState(false);
+    const [countdown, setCountdown] = useState(0);
     const [status, setStatus] = useState("");
-    const [resultLink, setResultLink] = useState("");
     const [industry, setIndustry] = useState("");
     const [location, setLocation] = useState("");
 
+    // Countdown timer after job starts
+    useEffect(() => {
+        if (countdown > 0) {
+            const timer = setTimeout(() => setCountdown(countdown - 1), 1000);
+            return () => clearTimeout(timer);
+        } else if (countdown === 0 && jobStarted) {
+            setStatus("✅ Results should be ready! Check your Google Sheet now.");
+        }
+    }, [countdown, jobStarted]);
+
     const runScraper = async () => {
         if (!industry || !location) {
-            setStatus("Please enter both industry and location");
+            setStatus("Please enter both fields");
             return;
         }
 
         setLoading(true);
-        setStatus("Connecting...");
+        setJobStarted(false);
+        setStatus("Connecting to server...");
 
         const API_URL = "https://b2b-scraper-4nme.onrender.com";
 
@@ -33,13 +45,14 @@ export default function Home() {
             const data = await res.json();
 
             if (res.ok) {
-                setStatus(`Started. Retrieving results for ${industry}...`);
-                setResultLink("https://docs.google.com/spreadsheets/u/0/");
+                setJobStarted(true);
+                setCountdown(90); // 90 second countdown
+                setStatus(`🔄 Scraping ${industry} in ${location}...`);
             } else {
-                setStatus("Error: " + data.detail);
+                setStatus("❌ Error: " + data.detail);
             }
         } catch (e) {
-            setStatus("Connection failed. Server may be sleeping.");
+            setStatus("❌ Connection failed. Server may be sleeping (wait 60s and retry).");
         } finally {
             setLoading(false);
         }
@@ -48,10 +61,9 @@ export default function Home() {
     return (
         <div className="flex flex-col items-center justify-center min-h-screen px-6 animate-fade-in">
 
-            {/* Centered content block constrained to 640px */}
             <div className="w-full max-w-[580px] flex flex-col gap-10">
 
-                {/* Hero / Headline */}
+                {/* Hero */}
                 <div className="text-center space-y-4">
                     <h1 className="text-[48px] md:text-[56px] font-light tracking-tight text-[#edEEF0] leading-[1.05]">
                         Where should we start?
@@ -61,10 +73,9 @@ export default function Home() {
                     </p>
                 </div>
 
-                {/* Form Group */}
+                {/* Form */}
                 <div className="flex flex-col gap-5">
 
-                    {/* Industry Input */}
                     <div>
                         <label className="minimal-label">INDUSTRY / BUSINESS TYPE</label>
                         <input
@@ -73,10 +84,10 @@ export default function Home() {
                             onChange={(e) => setIndustry(e.target.value)}
                             className="minimal-input"
                             placeholder="e.g. Dentists, SaaS, Plumbers"
+                            disabled={loading || (jobStarted && countdown > 0)}
                         />
                     </div>
 
-                    {/* Location Input */}
                     <div>
                         <label className="minimal-label">TARGET LOCATION</label>
                         <input
@@ -85,49 +96,62 @@ export default function Home() {
                             onChange={(e) => setLocation(e.target.value)}
                             className="minimal-input"
                             placeholder="e.g. Austin, TX"
+                            disabled={loading || (jobStarted && countdown > 0)}
                         />
                     </div>
 
-                    {/* Vertical Rhythm Spacer */}
                     <div className="h-2"></div>
 
-                    {/* Primary Button (Dark Surface) */}
-                    <button
-                        onClick={runScraper}
-                        disabled={loading}
-                        className="minimal-btn group"
-                    >
-                        {loading ? (
-                            <>
-                                <Loader2 className="w-5 h-5 animate-spin text-[#8E8E93]" />
-                                <span className="text-[#edEEF0]">Processing...</span>
-                            </>
-                        ) : (
-                            <>
-                                <Sparkles className="w-5 h-5 text-[#8E8E93] group-hover:text-white transition-colors" />
-                                <span>Find Leads</span>
-                            </>
-                        )}
-                    </button>
+                    {/* Primary Button - changes based on state */}
+                    {!jobStarted || countdown === 0 ? (
+                        <button
+                            onClick={runScraper}
+                            disabled={loading}
+                            className="minimal-btn group"
+                        >
+                            {loading ? (
+                                <>
+                                    <Loader2 className="w-5 h-5 animate-spin text-[#8E8E93]" />
+                                    <span className="text-[#edEEF0]">Connecting...</span>
+                                </>
+                            ) : (
+                                <>
+                                    <Sparkles className="w-5 h-5 text-[#8E8E93] group-hover:text-white transition-colors" />
+                                    <span>Find Leads</span>
+                                </>
+                            )}
+                        </button>
+                    ) : (
+                        <div className="flex flex-col gap-3">
+                            {/* Countdown indicator */}
+                            <div className="flex items-center justify-center gap-3 py-4 px-6 bg-[#1a1a1d] rounded-xl">
+                                <Clock className="w-5 h-5 text-[#8E8E93] animate-pulse" />
+                                <span className="text-[#edEEF0]">
+                                    Scraping in progress... <span className="font-mono text-[#8E8E93]">{countdown}s</span> remaining
+                                </span>
+                            </div>
+
+                            {/* Check Sheet Button */}
+                            <a
+                                href="https://docs.google.com/spreadsheets/u/0/"
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="minimal-btn flex items-center justify-center gap-2 no-underline"
+                            >
+                                <ExternalLink className="w-5 h-5 text-[#8E8E93]" />
+                                <span>Check Google Sheets</span>
+                            </a>
+                        </div>
+                    )}
 
                 </div>
 
-                {/* Minimal Status Feedback */}
+                {/* Status Message */}
                 {status && (
                     <div className="text-center animate-fade-in">
-                        <p className={`text-sm font-medium ${status.includes('Error') || status.includes('failed') ? "text-red-400" : "text-[#edEEF0]"}`}>
+                        <p className={`text-sm font-medium ${status.includes('❌') ? "text-red-400" : status.includes('✅') ? "text-green-400" : "text-[#edEEF0]"}`}>
                             {status}
                         </p>
-                        {resultLink && (
-                            <a
-                                href={resultLink}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="inline-flex items-center gap-2 mt-3 text-sm text-[#8E8E93] hover:text-[#edEEF0] transition-colors"
-                            >
-                                Open Google Sheets <ExternalLink className="w-3 h-3" />
-                            </a>
-                        )}
                     </div>
                 )}
 
