@@ -2,21 +2,22 @@
 @tailwind components;
 @tailwind utilities;
 
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500&display=swap');
 
 :root {
   --bg-primary: #0b0b0d;
   --text-primary: #edEEF0;
-  --text-secondary: #8E8E93;
-  --surface-input: #1C1C1E;
-  --surface-hover: #2C2C2E;
-  --border-subtle: rgba(255, 255, 255, 0.08);
-  --accent-glow: rgba(255, 255, 255, 0.15);
-  --brand-gradient: linear-gradient(135deg, #e0e0e0 0%, #a0a0a0 100%);
+  --text-muted: #8E8E93;
+  --surface-input: #1a1a1d;
+  --surface-hover: #232326;
+  --surface-button: #1a1a1d;
+  --accent-glow: rgba(255, 255, 255, 0.08);
 }
 
 * {
   box-sizing: border-box;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
 body {
@@ -24,12 +25,85 @@ body {
   background-color: var(--bg-primary);
   color: var(--text-primary);
   min-height: 100vh;
-  -webkit-font-smoothing: antialiased;
-  display: flex;
-  flex-direction: column;
+  margin: 0;
 }
 
-/* Fade In Animation */
+/* Minimal Input Styles */
+.minimal-input {
+  width: 100%;
+  background-color: var(--surface-input);
+  border: 1px solid transparent;
+  border-radius: 12px;
+  color: var(--text-primary);
+  font-size: 16px;
+  font-weight: 400;
+  padding: 16px 20px;
+  transition: all 0.3s ease;
+  outline: none;
+}
+
+.minimal-input:hover {
+  background-color: var(--surface-hover);
+}
+
+.minimal-input:focus {
+  background-color: var(--surface-hover);
+  box-shadow: 0 0 0 2px var(--accent-glow);
+}
+
+.minimal-input::placeholder {
+  color: var(--text-muted);
+  opacity: 0.7;
+}
+
+/* Minimal Label */
+.minimal-label {
+  display: block;
+  font-size: 13px;
+  color: var(--text-muted);
+  margin-bottom: 10px;
+  font-weight: 500;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+}
+
+/* AI-Native Button Styles */
+.minimal-btn {
+  width: 100%;
+  background-color: var(--surface-button);
+  color: var(--text-primary);
+  font-size: 16px;
+  font-weight: 500;
+  padding: 18px;
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  cursor: pointer;
+  transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+}
+
+.minimal-btn:hover {
+  background-color: #232326;
+  border-color: rgba(255, 255, 255, 0.15);
+  box-shadow: 0 0 30px rgba(255, 255, 255, 0.05);
+  transform: translateY(-1px);
+}
+
+.minimal-btn:active {
+  transform: translateY(1px);
+}
+
+.minimal-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+/* Animations */
 @keyframes fadeIn {
   from {
     opacity: 0;
@@ -43,79 +117,5 @@ body {
 }
 
 .animate-fade-in {
-  animation: fadeIn 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
-}
-
-/* Custom Input Styling */
-.gemini-input {
-  width: 100%;
-  background-color: var(--surface-input);
-  border: 1px solid var(--border-subtle);
-  border-radius: 12px;
-  color: var(--text-primary);
-  font-size: 16px;
-  padding: 16px 20px;
-  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
-  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.2);
-}
-
-.gemini-input:hover {
-  background-color: var(--surface-hover);
-  border-color: rgba(255, 255, 255, 0.12);
-}
-
-.gemini-input:focus {
-  outline: none;
-  background-color: var(--surface-hover);
-  border-color: rgba(255, 255, 255, 0.3);
-  box-shadow: 0 0 0 4px rgba(255, 255, 255, 0.05), inset 0 1px 2px rgba(0, 0, 0, 0.2);
-}
-
-.gemini-input::placeholder {
-  color: var(--text-secondary);
-  font-weight: 400;
-}
-
-/* Button Styling */
-.gemini-btn {
-  width: 100%;
-  background: #ffffff;
-  color: #0b0b0d;
-  font-weight: 500;
-  font-size: 16px;
-  padding: 16px;
-  border-radius: 12px;
-  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
-  border: none;
-  cursor: pointer;
-  position: relative;
-  overflow: hidden;
-}
-
-.gemini-btn:hover {
-  background: #f0f0f0;
-  box-shadow: 0 0 20px rgba(255, 255, 255, 0.15);
-  transform: translateY(-1px);
-}
-
-.gemini-btn:active {
-  transform: translateY(0);
-  background: #e0e0e0;
-}
-
-.gemini-btn:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-  transform: none;
-  box-shadow: none;
-}
-
-/* Label Styling */
-.gemini-label {
-  display: block;
-  font-size: 13px;
-  color: var(--text-secondary);
-  margin-bottom: 8px;
-  font-weight: 500;
-  letter-spacing: 0.01em;
+  animation: fadeIn 0.8s ease-out forwards;
 }
