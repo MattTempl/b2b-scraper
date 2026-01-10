@@ -36,15 +36,13 @@ def read_root():
 async def run_lead_gen(request: LeadGenRequest):
     """
     Triggers the General Lead Gen pipeline (Google Maps Scraper).
-    Runs synchronously and returns the unique Google Sheet URL.
+    Uses a master sheet that the user must create and share.
     """
-    import re
-    
     try:
         query = f"{request.industry} in {request.location}"
         
-        # Unique sheet name (timestamp added by push_to_sheets.py)
-        sheet_name = f"Leads: {request.industry} in {request.location}"
+        # Master sheet - user must create this and share with Service Account
+        sheet_name = "B2B Scraper Results"
         
         # Prepare environment
         env = os.environ.copy()
@@ -66,39 +64,20 @@ async def run_lead_gen(request: LeadGenRequest):
             "--skip-verify"
         ]
         
-        # Run SYNCHRONOUSLY to capture output
-        result = subprocess.run(
+        # Fire and forget - start the process and return immediately
+        process = subprocess.Popen(
             cmd,
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
-            env=env,
-            text=True,
-            timeout=300  # 5 minute timeout
+            env=env
         )
         
-        output = result.stdout + result.stderr
-        
-        # Parse sheet URL from output (look for "Sheet URL: https://...")
-        sheet_url = None
-        url_match = re.search(r'Sheet URL: (https://[^\s]+)', output)
-        if url_match:
-            sheet_url = url_match.group(1)
-        
-        if result.returncode == 0 and sheet_url:
-            return {
-                "status": "Complete",
-                "message": f"Found leads for {query}!",
-                "sheet_url": sheet_url
-            }
-        else:
-            return {
-                "status": "Error",
-                "message": "Job completed but no sheet URL found.",
-                "output": output[-500:] if len(output) > 500 else output  # Last 500 chars for debugging
-            }
+        return {
+            "status": "Job Started",
+            "message": f"Scraping '{query}'. Results will appear in your 'B2B Scraper Results' sheet in ~60-90 seconds.",
+            "sheet_name": sheet_name
+        }
 
-    except subprocess.TimeoutExpired:
-        raise HTTPException(status_code=504, detail="Job timed out after 5 minutes")
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 

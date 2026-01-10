@@ -1,12 +1,26 @@
-import React, { useState } from 'react';
-import { Loader2, Sparkles, ExternalLink, CheckCircle } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Loader2, Sparkles, ExternalLink, Clock } from 'lucide-react';
 
 export default function Home() {
     const [loading, setLoading] = useState(false);
+    const [jobStarted, setJobStarted] = useState(false);
+    const [countdown, setCountdown] = useState(0);
     const [status, setStatus] = useState("");
-    const [sheetUrl, setSheetUrl] = useState("");
     const [industry, setIndustry] = useState("");
     const [location, setLocation] = useState("");
+
+    // Master sheet URL - user must create this sheet and share with Service Account
+    const SHEET_URL = "https://docs.google.com/spreadsheets/d/YOUR_SHEET_ID_HERE/edit";
+
+    // Countdown timer
+    useEffect(() => {
+        if (countdown > 0) {
+            const timer = setTimeout(() => setCountdown(countdown - 1), 1000);
+            return () => clearTimeout(timer);
+        } else if (countdown === 0 && jobStarted) {
+            setStatus("✅ Results should be ready! Check the spreadsheet.");
+        }
+    }, [countdown, jobStarted]);
 
     const runScraper = async () => {
         if (!industry || !location) {
@@ -15,26 +29,12 @@ export default function Home() {
         }
 
         setLoading(true);
-        setSheetUrl("");
-        setStatus("🔄 Connecting to server...");
+        setJobStarted(false);
+        setStatus("🔄 Connecting...");
 
         const API_URL = "https://b2b-scraper-4nme.onrender.com";
 
         try {
-            // Update status during long wait
-            const statusUpdates = [
-                "🔄 Waking up server...",
-                "🔄 Searching Google Maps...",
-                "🔄 Processing results...",
-                "🔄 Creating your spreadsheet..."
-            ];
-
-            let updateIndex = 0;
-            const statusInterval = setInterval(() => {
-                updateIndex = (updateIndex + 1) % statusUpdates.length;
-                setStatus(statusUpdates[updateIndex]);
-            }, 15000); // Update every 15 seconds
-
             const res = await fetch(`${API_URL}/api/run-lead-gen`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -45,19 +45,17 @@ export default function Home() {
                 })
             });
 
-            clearInterval(statusInterval);
             const data = await res.json();
 
-            if (res.ok && data.sheet_url) {
-                setStatus(`✅ Found leads for ${industry} in ${location}!`);
-                setSheetUrl(data.sheet_url);
-            } else if (data.status === "Error") {
-                setStatus(`❌ ${data.message}`);
+            if (res.ok) {
+                setJobStarted(true);
+                setCountdown(90);
+                setStatus(`🔄 Scraping ${industry} in ${location}...`);
             } else {
                 setStatus("❌ " + (data.detail || "Unknown error"));
             }
         } catch (e) {
-            setStatus("❌ Connection failed. Server may be sleeping (wait 60s and retry).");
+            setStatus("❌ Connection failed. Server may be sleeping.");
         } finally {
             setLoading(false);
         }
@@ -89,7 +87,7 @@ export default function Home() {
                             onChange={(e) => setIndustry(e.target.value)}
                             className="minimal-input"
                             placeholder="e.g. Dentists, SaaS, Plumbers"
-                            disabled={loading}
+                            disabled={loading || (jobStarted && countdown > 0)}
                         />
                     </div>
 
@@ -101,57 +99,61 @@ export default function Home() {
                             onChange={(e) => setLocation(e.target.value)}
                             className="minimal-input"
                             placeholder="e.g. Austin, TX"
-                            disabled={loading}
+                            disabled={loading || (jobStarted && countdown > 0)}
                         />
                     </div>
 
                     <div className="h-2"></div>
 
-                    {/* Primary Button */}
-                    <button
-                        onClick={runScraper}
-                        disabled={loading}
-                        className="minimal-btn group"
-                    >
-                        {loading ? (
-                            <>
-                                <Loader2 className="w-5 h-5 animate-spin text-[#8E8E93]" />
-                                <span className="text-[#edEEF0]">Finding leads (60-90s)...</span>
-                            </>
-                        ) : (
-                            <>
-                                <Sparkles className="w-5 h-5 text-[#8E8E93] group-hover:text-white transition-colors" />
-                                <span>Find Leads</span>
-                            </>
-                        )}
-                    </button>
+                    {/* Button states */}
+                    {!jobStarted || countdown === 0 ? (
+                        <button
+                            onClick={runScraper}
+                            disabled={loading}
+                            className="minimal-btn group"
+                        >
+                            {loading ? (
+                                <>
+                                    <Loader2 className="w-5 h-5 animate-spin text-[#8E8E93]" />
+                                    <span className="text-[#edEEF0]">Connecting...</span>
+                                </>
+                            ) : (
+                                <>
+                                    <Sparkles className="w-5 h-5 text-[#8E8E93] group-hover:text-white transition-colors" />
+                                    <span>Find Leads</span>
+                                </>
+                            )}
+                        </button>
+                    ) : (
+                        <div className="flex flex-col gap-3">
+                            {/* Countdown */}
+                            <div className="flex items-center justify-center gap-3 py-4 px-6 bg-[#1a1a1d] rounded-xl">
+                                <Clock className="w-5 h-5 text-[#8E8E93] animate-pulse" />
+                                <span className="text-[#edEEF0]">
+                                    Processing... <span className="font-mono text-[#8E8E93]">{countdown}s</span>
+                                </span>
+                            </div>
+
+                            {/* Sheet Link */}
+                            <a
+                                href="https://docs.google.com/spreadsheets/u/0/"
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="minimal-btn flex items-center justify-center gap-2 no-underline"
+                            >
+                                <ExternalLink className="w-5 h-5 text-[#8E8E93]" />
+                                <span>Open B2B Scraper Results Sheet</span>
+                            </a>
+                        </div>
+                    )}
 
                 </div>
 
-                {/* Status Message */}
+                {/* Status */}
                 {status && (
                     <div className="text-center animate-fade-in">
                         <p className={`text-sm font-medium ${status.includes('❌') ? "text-red-400" : status.includes('✅') ? "text-green-400" : "text-[#edEEF0]"}`}>
                             {status}
-                        </p>
-                    </div>
-                )}
-
-                {/* Sheet URL - Big Prominent Button */}
-                {sheetUrl && (
-                    <div className="animate-fade-in">
-                        <a
-                            href={sheetUrl}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="flex items-center justify-center gap-3 w-full py-5 px-6 bg-green-600 hover:bg-green-500 rounded-xl text-white font-medium text-lg transition-all no-underline"
-                        >
-                            <CheckCircle className="w-6 h-6" />
-                            <span>Open Your Results Spreadsheet</span>
-                            <ExternalLink className="w-5 h-5" />
-                        </a>
-                        <p className="text-center text-[#8E8E93] text-xs mt-3">
-                            This is your unique link. Bookmark it or share it!
                         </p>
                     </div>
                 )}

@@ -80,25 +80,15 @@ def get_gspread_client():
 
 
 def create_or_open_sheet(client, sheet_name: str):
-    """Create a new sheet with unique timestamp and make it publicly viewable."""
-    # Always create a new sheet with timestamp for uniqueness
-    timestamp = datetime.now().strftime("%Y-%m-%d %H:%M")
-    unique_name = f"{sheet_name} - {timestamp}"
-    
-    # Create the sheet
-    print(f"[*] Creating sheet: {unique_name}")
-    sheet = client.create(unique_name)
-    print(f"[*] Created new sheet: {unique_name}")
-    
-    # Make the sheet publicly viewable (anyone with link can view)
+    """Open an existing sheet (user must create and share it with the Service Account)."""
     try:
-        sheet.share(None, perm_type='anyone', role='reader')
-        print(f"[*] Made sheet public: {sheet.url}")
+        sheet = client.open(sheet_name)
+        print(f"[*] Opened existing sheet: {sheet_name}")
+        return sheet
     except Exception as e:
-        print(f"[!] Warning: Could not make sheet public: {e}")
-        print(f"[*] Sheet URL (private): {sheet.url}")
-    
-    return sheet
+        print(f"[!] Error opening sheet '{sheet_name}': {e}")
+        print(f"[!] Make sure you created a sheet named '{sheet_name}' and shared it with the Service Account email.")
+        raise
 
 
 def format_lead_for_sheet(lead: dict) -> list:
