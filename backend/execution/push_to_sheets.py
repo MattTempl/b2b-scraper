@@ -80,15 +80,23 @@ def get_gspread_client():
 
 
 def create_or_open_sheet(client, sheet_name: str):
-    """Create a new sheet or open existing one."""
+    """Create a new sheet with unique timestamp and make it publicly viewable."""
+    # Always create a new sheet with timestamp for uniqueness
+    timestamp = datetime.now().strftime("%Y-%m-%d %H:%M")
+    unique_name = f"{sheet_name} - {timestamp}"
+    
     try:
-        # Try to open existing sheet
+        sheet = client.create(unique_name)
+        print(f"[*] Created new sheet: {unique_name}")
+        
+        # Make the sheet publicly viewable (anyone with link can view)
+        sheet.share(None, perm_type='anyone', role='reader')
+        print(f"[*] Made sheet public: {sheet.url}")
+        
+    except Exception as e:
+        print(f"[!] Error creating sheet: {e}")
+        # Fallback: try to open existing
         sheet = client.open(sheet_name)
-        print(f"[*] Opened existing sheet: {sheet_name}")
-    except gspread.SpreadsheetNotFound:
-        # Create new sheet
-        sheet = client.create(sheet_name)
-        print(f"[*] Created new sheet: {sheet_name}")
     
     return sheet
 

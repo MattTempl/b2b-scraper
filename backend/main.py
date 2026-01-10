@@ -36,51 +36,69 @@ def read_root():
 async def run_lead_gen(request: LeadGenRequest):
     """
     Triggers the General Lead Gen pipeline (Google Maps Scraper).
+    Runs synchronously and returns the unique Google Sheet URL.
     """
+    import re
+    
     try:
         query = f"{request.industry} in {request.location}"
         
-        # USE A MASTER SHEET
-        # Creating new sheets with a Service Account makes them hidden/private.
-        # Instead, we overwrite a single shared sheet so the user can actually see it.
-        sheet_name = "B2B Scraper Results"
+        # Unique sheet name (timestamp added by push_to_sheets.py)
+        sheet_name = f"Leads: {request.industry} in {request.location}"
         
         # Prepare environment
         env = os.environ.copy()
         
-        # Calculate absolute path to the script to avoid CWD issues
-        # backend/main.py -> backend/execution/run_lead_gen.py
+        # Calculate absolute path to the script
         current_dir = os.path.dirname(os.path.abspath(__file__))
         script_path = os.path.join(current_dir, "execution", "run_lead_gen.py")
         
-        # Check if file exists (debug)
         if not os.path.exists(script_path):
              raise FileNotFoundError(f"Script not found at: {script_path}")
 
-        # Command: python3 /abs/path/to/execution/run_lead_gen.py ...
+        # Command
         cmd = [
             "python3", script_path,
             query,
             "--limit", str(request.limit),
             "--sheet", sheet_name,
-            "--skip-crawl", # Default to speed for web demo
+            "--skip-crawl",
             "--skip-verify"
         ]
         
-        process = subprocess.Popen(
+        # Run SYNCHRONOUSLY to capture output
+        result = subprocess.run(
             cmd,
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
-            env=env
+            env=env,
+            text=True,
+            timeout=300  # 5 minute timeout
         )
         
-        return {
-            "status": "Job Started", 
-            "pid": process.pid, 
-            "message": f"Scraping '{query}'. Results will appear in sheet: {sheet_name}",
-            "sheet_name": sheet_name
-        }
+        output = result.stdout + result.stderr
+        
+        # Parse sheet URL from output (look for "Sheet URL: https://...")
+        sheet_url = None
+        url_match = re.search(r'Sheet URL: (https://[^\s]+)', output)
+        if url_match:
+            sheet_url = url_match.group(1)
+        
+        if result.returncode == 0 and sheet_url:
+            return {
+                "status": "Complete",
+                "message": f"Found leads for {query}!",
+                "sheet_url": sheet_url
+            }
+        else:
+            return {
+                "status": "Error",
+                "message": "Job completed but no sheet URL found.",
+                "output": output[-500:] if len(output) > 500 else output  # Last 500 chars for debugging
+            }
 
+    except subprocess.TimeoutExpired:
+        raise HTTPException(status_code=504, detail="Job timed out after 5 minutes")
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
