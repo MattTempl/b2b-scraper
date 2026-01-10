@@ -46,10 +46,18 @@ async def run_lead_gen(request: LeadGenRequest):
         # Prepare environment
         env = os.environ.copy()
         
-        # Command: python3 execution/run_lead_gen.py "Query" --limit 50 --sheet "Name"
-        # Flags: --skip-crawl --skip-verify (for speed/safety on MVP)
+        # Calculate absolute path to the script to avoid CWD issues
+        # backend/main.py -> backend/execution/run_lead_gen.py
+        current_dir = os.path.dirname(os.path.abspath(__file__))
+        script_path = os.path.join(current_dir, "execution", "run_lead_gen.py")
+        
+        # Check if file exists (debug)
+        if not os.path.exists(script_path):
+             raise FileNotFoundError(f"Script not found at: {script_path}")
+
+        # Command: python3 /abs/path/to/execution/run_lead_gen.py ...
         cmd = [
-            "python3", "execution/run_lead_gen.py",
+            "python3", script_path,
             query,
             "--limit", str(request.limit),
             "--sheet", sheet_name,
