@@ -12,8 +12,8 @@ export default function Home() {
         setLoading(true);
         setStatus("Waking up server (this may take 50s)...");
 
-        // In a real app we would get values from inputs
-        const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+        // Hardcoded for stability
+        const API_URL = "https://b2b-scraper-4nme.onrender.com";
 
         try {
             const res = await fetch(`${API_URL}/api/run-lead-gen`, {
