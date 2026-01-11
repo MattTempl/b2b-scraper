@@ -136,7 +136,7 @@ export default function Home() {
 
                             {/* Sheet Link */}
                             <a
-                                href="https://docs.google.com/spreadsheets/u/0/"
+                                href="https://docs.google.com/spreadsheets/d/1b9DrDkl1eUKKtyFFxXd_xt-3IaVObV25tKsTE0bn2xY/edit?usp=sharing"
                                 target="_blank"
                                 rel="noopener noreferrer"
                                 className="minimal-btn flex items-center justify-center gap-2 no-underline"

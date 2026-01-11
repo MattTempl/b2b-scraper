@@ -79,15 +79,19 @@ def get_gspread_client():
     return gspread.authorize(creds)
 
 
-def create_or_open_sheet(client, sheet_name: str):
-    """Open an existing sheet (user must create and share it with the Service Account)."""
+# HARDCODED SHEET URL - RESET STRATEGY
+SHEET_URL = "https://docs.google.com/spreadsheets/d/1b9DrDkl1eUKKtyFFxXd_xt-3IaVObV25tKsTE0bn2xY/edit?usp=sharing"
+
+def create_or_open_sheet(client, sheet_name=None):
+    """Open the Master Sheet by exact URL (ignores sheet_name arg)."""
     try:
-        sheet = client.open(sheet_name)
-        print(f"[*] Opened existing sheet: {sheet_name}")
+        print(f"[*] Opening Master Sheet by URL...")
+        sheet = client.open_by_url(SHEET_URL)
+        print(f"[*] Successfully opened definition: {sheet.title}")
         return sheet
     except Exception as e:
-        print(f"[!] Error opening sheet '{sheet_name}': {e}")
-        print(f"[!] Make sure you created a sheet named '{sheet_name}' and shared it with the Service Account email.")
+        print(f"[!] CRITICAL ERROR opening sheet URL: {e}")
+        print(f"[!] Verify bot-user@gen-lang-client-0510712247.iam.gserviceaccount.com has EDITOR access.")
         raise
 
 
