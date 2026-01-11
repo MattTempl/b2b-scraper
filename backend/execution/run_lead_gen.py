@@ -135,7 +135,7 @@ Examples:
     # Generate sheet name if not provided
     sheet_name = args.sheet or f"{args.query} - {datetime.now().strftime('%Y-%m-%d')}"
     
-     print(f"""
+    print(f"""
 ╔══════════════════════════════════════════════════════════════╗
 ║           B2B LEAD GENERATION PIPELINE                       ║
 ╠══════════════════════════════════════════════════════════════╣

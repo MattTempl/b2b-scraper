@@ -90,9 +90,6 @@ async def run_lead_gen(request: LeadGenRequest):
             env=env
         )
         
-            env=env
-        )
-        
         # We don't need to store process object anymore for status, 
         # but good to keep reference if we want to kill it later.
         JOBS[job_id] = process
