@@ -17,6 +17,8 @@ import sys
 import subprocess
 from pathlib import Path
 from datetime import datetime
+import json
+import time
 
 # Script paths
 EXECUTION_DIR = Path(__file__).parent
@@ -26,7 +28,28 @@ VERIFY_EMAILS = EXECUTION_DIR / "verify_email_smtp.py"
 PUSH_SHEETS = EXECUTION_DIR / "push_to_sheets.py"
 
 # Temp file paths
-TMP_DIR = Path(__file__).parent.parent / ".tmp"
+TMP_DIR = Path(__file__).resolve().parent.parent.parent / ".tmp"
+JOBS_DIR = TMP_DIR / "jobs"
+
+def update_status(job_id: str, status: str, msg: str = None, error: str = None):
+    """Write job status to a JSON file."""
+    if not job_id:
+        return
+        
+    JOBS_DIR.mkdir(parents=True, exist_ok=True)
+    status_file = JOBS_DIR / f"{job_id}.json"
+    
+    data = {
+        "job_id": job_id,
+        "status": status,
+        "message": msg,
+        "error": error,
+        "updated_at": datetime.now().isoformat()
+    }
+    
+    with open(status_file, 'w') as f:
+        json.dump(data, f)
+
 
 
 def run_step(name: str, cmd: list) -> bool:
@@ -98,6 +121,11 @@ Examples:
         action="store_true",
         help="Skip pushing to Google Sheets"
     )
+    parser.add_argument(
+        "--job-id",
+        type=str,
+        help="Unique Job ID for status tracking"
+    )
     
     args = parser.parse_args()
     
@@ -117,6 +145,9 @@ Examples:
     # Ensure tmp directory exists
     TMP_DIR.mkdir(exist_ok=True)
     
+    # Init Status
+    update_status(args.job_id, "running", f"Starting pipeline for '{args.query}'")
+
     # Step 1: Scrape Google Maps
     if not args.skip_maps:
         success = run_step(
@@ -125,6 +156,7 @@ Examples:
         )
         if not success:
             print("\n[!] Pipeline stopped at Google Maps scraping")
+            update_status(args.job_id, "failed", error="Google Maps scraping failed")
             sys.exit(1)
     else:
         print("\n[*] Skipping Google Maps scraping...")
@@ -137,6 +169,7 @@ Examples:
         )
         if not success:
             print("\n[!] Pipeline stopped at website crawling")
+            update_status(args.job_id, "failed", error="Website crawling failed")
             sys.exit(1)
     else:
         print("\n[*] Skipping website crawling...")
@@ -149,6 +182,7 @@ Examples:
         )
         if not success:
             print("\n[!] Pipeline stopped at email verification")
+            update_status(args.job_id, "failed", error="Email verification failed")
             sys.exit(1)
     else:
         print("\n[*] Skipping email verification...")
@@ -173,6 +207,7 @@ Examples:
         if not success:
             print("\n[!] Pipeline stopped at Google Sheets export")
             print("[*] Results are still saved in .tmp/verified_leads.json")
+            update_status(args.job_id, "failed", error="Google Sheets export failed")
             sys.exit(1)
     else:
         print("\n[*] Skipping Google Sheets export...")
@@ -182,6 +217,7 @@ Examples:
 ║                    PIPELINE COMPLETE! ✓                      ║
 ╚══════════════════════════════════════════════════════════════╝
     """)
+    update_status(args.job_id, "completed", "All steps finished successfully")
 
 
 if __name__ == "__main__":

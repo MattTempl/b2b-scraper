@@ -10,9 +10,16 @@ import uuid
 # Store background jobs: job_id -> process
 JOBS = {}
 
+from pathlib import Path
+
 # Force deploy v2 - 2026-01-10T17:31
 
 app = FastAPI()
+
+# Temp directory for jobs
+current_dir = os.path.dirname(os.path.abspath(__file__))
+TMP_DIR = Path(current_dir).parent / ".tmp"
+JOBS_DIR = TMP_DIR / "jobs"
 
 app.add_middleware(
     CORSMiddleware,
@@ -65,11 +72,12 @@ async def run_lead_gen(request: LeadGenRequest):
             "--limit", str(request.limit),
             "--sheet", sheet_name,
             "--skip-crawl",
-            "--skip-verify"
+            "--skip-verify",
         ]
         
         # Generate Job ID
         job_id = str(uuid.uuid4())
+        cmd.extend(["--job-id", job_id])
         
         # Fire and forget - start the process and return immediately
         process = subprocess.Popen(
@@ -79,7 +87,11 @@ async def run_lead_gen(request: LeadGenRequest):
             env=env
         )
         
-        # Store process for polling
+            env=env
+        )
+        
+        # We don't need to store process object anymore for status, 
+        # but good to keep reference if we want to kill it later.
         JOBS[job_id] = process
 
         return {
@@ -94,21 +106,22 @@ async def run_lead_gen(request: LeadGenRequest):
 
 @app.get("/api/job-status/{job_id}")
 async def get_job_status(job_id: str):
-    """Check the status of a background job."""
-    if job_id not in JOBS:
-        raise HTTPException(status_code=404, detail="Job not found")
+    """Check the status of a background job from file system."""
+    status_file = JOBS_DIR / f"{job_id}.json"
     
-    process = JOBS[job_id]
-    return_code = process.poll()
+    if not status_file.exists():
+        # Fallback to checking memory if file not created yet (very early)
+        if job_id in JOBS:
+             if JOBS[job_id].poll() is None:
+                 return {"status": "running"}
+        return {"status": "running"} # Assume running if just started
     
-    if return_code is None:
-        return {"status": "running"}
-    elif return_code == 0:
-        return {"status": "completed"}
-    else:
-        # Capture stderr if failed
-        stderr = process.stderr.read().decode() if process.stderr else "Unknown error"
-        return {"status": "failed", "error": stderr}
+    try:
+        with open(status_file, 'r') as f:
+            data = json.load(f)
+        return data
+    except Exception as e:
+        return {"status": "failed", "error": f"Failed to read status: {str(e)}"}
 
 @app.get("/api/debug-sheet")
 async def debug_sheet():
