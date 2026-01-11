@@ -8,6 +8,7 @@ export default function Home() {
     const [status, setStatus] = useState("");
     const [industry, setIndustry] = useState("");
     const [location, setLocation] = useState("");
+    const [numLeads, setNumLeads] = useState(50);
 
     // Master sheet URL - user must create this sheet and share with Service Account
     const SHEET_URL = "https://docs.google.com/spreadsheets/d/YOUR_SHEET_ID_HERE/edit";
@@ -41,7 +42,7 @@ export default function Home() {
                 body: JSON.stringify({
                     industry: industry,
                     location: location,
-                    limit: 50
+                    limit: parseInt(numLeads)
                 })
             });
 
@@ -99,6 +100,20 @@ export default function Home() {
                             onChange={(e) => setLocation(e.target.value)}
                             className="minimal-input"
                             placeholder="e.g. Austin, TX"
+                            disabled={loading || (jobStarted && countdown > 0)}
+                        />
+                    </div>
+
+                    <div>
+                        <label className="minimal-label">NUMBER OF LEADS (5-50)</label>
+                        <input
+                            type="number"
+                            min="5"
+                            max="50"
+                            value={numLeads}
+                            onChange={(e) => setNumLeads(e.target.value)}
+                            className="minimal-input"
+                            placeholder="50"
                             disabled={loading || (jobStarted && countdown > 0)}
                         />
                     </div>
