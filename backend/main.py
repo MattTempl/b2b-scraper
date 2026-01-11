@@ -17,8 +17,8 @@ from pathlib import Path
 app = FastAPI()
 
 # Temp directory for jobs
-current_dir = os.path.dirname(os.path.abspath(__file__))
-TMP_DIR = Path(current_dir).parent / ".tmp"
+# Robust path resolution: resolve() ensures we get absolute path free of symlinks/..
+TMP_DIR = Path(__file__).resolve().parent.parent / ".tmp"
 JOBS_DIR = TMP_DIR / "jobs"
 
 app.add_middleware(
@@ -82,6 +82,7 @@ async def run_lead_gen(request: LeadGenRequest):
         cmd.extend(["--job-id", job_id])
         
         # Fire and forget - start the process and return immediately
+        print(f"[*] Spawning subprocess: {cmd}") # Debug logging
         process = subprocess.Popen(
             cmd,
             stdout=subprocess.PIPE,
@@ -190,6 +191,35 @@ async def test_sheet_write_endpoint():
         }
     except Exception as e:
         return {"error": str(e)}
+
+@app.get("/api/debug-system")
+async def debug_system():
+    """Diagnostic endpoint to inspect server environment."""
+    try:
+        # 1. Paths
+        cwd = os.getcwd()
+        tmp_exists = TMP_DIR.exists()
+        jobs_exists = JOBS_DIR.exists()
+        
+        # 2. File Listings
+        tmp_files = [f.name for f in TMP_DIR.iterdir()] if tmp_exists else []
+        jobs_files = [f.name for f in JOBS_DIR.iterdir()] if jobs_exists else []
+        
+        # 3. Environment (Safe keys)
+        env_keys = list(os.environ.keys())
+        
+        return {
+            "cwd": cwd,
+            "tmp_dir": str(TMP_DIR),
+            "jobs_dir": str(JOBS_DIR),
+            "tmp_exists": tmp_exists,
+            "jobs_exists": jobs_exists,
+            "tmp_files": tmp_files,
+            "jobs_files": jobs_files,
+            "env_keys": env_keys
+        }
+    except Exception as e:
+        return {"status": "Error", "message": str(e)}
 
 @app.post("/api/run-venue-finder")
 async def run_venue_finder(request: VenueSearchRequest):

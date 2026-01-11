@@ -28,6 +28,7 @@ VERIFY_EMAILS = EXECUTION_DIR / "verify_email_smtp.py"
 PUSH_SHEETS = EXECUTION_DIR / "push_to_sheets.py"
 
 # Temp file paths
+# Robust path resolution: resolve() ensures we get absolute path free of symlinks/..
 TMP_DIR = Path(__file__).resolve().parent.parent.parent / ".tmp"
 JOBS_DIR = TMP_DIR / "jobs"
 
@@ -134,15 +135,18 @@ Examples:
     # Generate sheet name if not provided
     sheet_name = args.sheet or f"{args.query} - {datetime.now().strftime('%Y-%m-%d')}"
     
-    print(f"""
+     print(f"""
 ╔══════════════════════════════════════════════════════════════╗
 ║           B2B LEAD GENERATION PIPELINE                       ║
 ╠══════════════════════════════════════════════════════════════╣
 ║  Query: {args.query:<52} ║
-║  Limit: {args.limit:<52} ║
+║  Limit: {str(args.limit):<52} ║
 ║  Sheet: {sheet_name:<52} ║
+║  Ind  : {str(args.industry):<52} ║
+║  Loc  : {str(args.location):<52} ║
 ╚══════════════════════════════════════════════════════════════╝
     """)
+    print(f"[*] Raw Args: {args}") # Debug logging
     
     # Ensure tmp directory exists
     TMP_DIR.mkdir(exist_ok=True)
