@@ -4,7 +4,7 @@ import { Loader2, Sparkles, ExternalLink, Clock } from 'lucide-react';
 export default function Home() {
     const [loading, setLoading] = useState(false);
     const [jobStarted, setJobStarted] = useState(false);
-    const [countdown, setCountdown] = useState(0);
+    const [jobId, setJobId] = useState(null);
     const [status, setStatus] = useState("");
     const [industry, setIndustry] = useState("");
     const [location, setLocation] = useState("");
@@ -14,14 +14,33 @@ export default function Home() {
     const SHEET_URL = "https://docs.google.com/spreadsheets/d/YOUR_SHEET_ID_HERE/edit";
 
     // Countdown timer
+    // Poll job status
     useEffect(() => {
-        if (countdown > 0) {
-            const timer = setTimeout(() => setCountdown(countdown - 1), 1000);
-            return () => clearTimeout(timer);
-        } else if (countdown === 0 && jobStarted) {
-            setStatus("✅ Results should be ready! Check the spreadsheet.");
+        let interval;
+        if (jobStarted && jobId) {
+            const API_URL = "https://b2b-scraper-4nme.onrender.com";
+            interval = setInterval(async () => {
+                try {
+                    console.log(`Polling job: ${jobId}`);
+                    const res = await fetch(`${API_URL}/api/job-status/${jobId}`);
+                    const data = await res.json();
+
+                    if (data.status === "completed") {
+                        setJobStarted(false);
+                        setJobId(null);
+                        setStatus("✅ Results are ready! Check the spreadsheet.");
+                    } else if (data.status === "failed") {
+                        setJobStarted(false);
+                        setJobId(null);
+                        setStatus(`❌ Job failed: ${data.error || "Unknown error"}`);
+                    }
+                } catch (e) {
+                    console.error("Polling error:", e);
+                }
+            }, 3000); // Poll every 3 seconds
         }
-    }, [countdown, jobStarted]);
+        return () => clearInterval(interval);
+    }, [jobStarted, jobId]);
 
     const runScraper = async () => {
         if (!industry || !location) {
@@ -50,7 +69,7 @@ export default function Home() {
 
             if (res.ok) {
                 setJobStarted(true);
-                setCountdown(90);
+                setJobId(data.job_id); // Backend must return this!
                 setStatus(`🔄 Scraping ${industry} in ${location}...`);
             } else {
                 setStatus("❌ " + (data.detail || "Unknown error"));
@@ -88,7 +107,7 @@ export default function Home() {
                             onChange={(e) => setIndustry(e.target.value)}
                             className="minimal-input"
                             placeholder="e.g. Dentists, SaaS, Plumbers"
-                            disabled={loading || (jobStarted && countdown > 0)}
+                            disabled={loading || jobStarted}
                         />
                     </div>
 
@@ -100,7 +119,7 @@ export default function Home() {
                             onChange={(e) => setLocation(e.target.value)}
                             className="minimal-input"
                             placeholder="e.g. Austin, TX"
-                            disabled={loading || (jobStarted && countdown > 0)}
+                            disabled={loading || jobStarted}
                         />
                     </div>
 
@@ -114,14 +133,14 @@ export default function Home() {
                             onChange={(e) => setNumLeads(e.target.value)}
                             className="minimal-input"
                             placeholder="50"
-                            disabled={loading || (jobStarted && countdown > 0)}
+                            disabled={loading || jobStarted}
                         />
                     </div>
 
                     <div className="h-2"></div>
 
                     {/* Button states */}
-                    {!jobStarted || countdown === 0 ? (
+                    {!jobStarted ? (
                         <button
                             onClick={runScraper}
                             disabled={loading}
@@ -145,7 +164,7 @@ export default function Home() {
                             <div className="flex items-center justify-center gap-3 py-4 px-6 bg-[#1a1a1d] rounded-xl">
                                 <Clock className="w-5 h-5 text-[#8E8E93] animate-pulse" />
                                 <span className="text-[#edEEF0]">
-                                    Processing... <span className="font-mono text-[#8E8E93]">{countdown}s</span>
+                                    Processing... <span className="font-mono text-[#8E8E93] animate-pulse">Please wait</span>
                                 </span>
                             </div>
 
@@ -157,7 +176,7 @@ export default function Home() {
                                 className="minimal-btn flex items-center justify-center gap-2 no-underline"
                             >
                                 <ExternalLink className="w-5 h-5 text-[#8E8E93]" />
-                                <span>Open B2B Scraper Results Sheet</span>
+                                <span className="text-center">Open B2B Scraper Results Sheet</span>
                             </a>
                         </div>
                     )}
