@@ -136,10 +136,26 @@ def push_to_sheets(leads: list, sheet_name: str) -> str:
     # Get the first worksheet
     worksheet = spreadsheet.sheet1
     
-    # Clear existing data
-    worksheet.clear()
+    # Find next available row
+    existing_values = worksheet.get_all_values()
+    next_row = len(existing_values) + 1
     
-    # Set up headers
+    # 1. Add Separator / Title Row
+    timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    title_row_content = [f"SEARCH: {timestamp} - Found {len(leads)} leads"] + [""] * 7
+    
+    worksheet.update(f'A{next_row}', [title_row_content])
+    
+    # Format Title Row (Green + Bold)
+    worksheet.format(f'A{next_row}:H{next_row}', {
+        'textFormat': {'bold': True, 'foregroundColor': {'red': 1.0, 'green': 1.0, 'blue': 1.0}},
+        'backgroundColor': {'red': 0.1, 'green': 0.5, 'blue': 0.1}, # Green
+        'horizontalAlignment': 'LEFT'
+    })
+    
+    next_row += 1
+
+    # 2. Add Headers
     headers = [
         'Name',
         'Website', 
@@ -151,26 +167,23 @@ def push_to_sheets(leads: list, sheet_name: str) -> str:
         'Email Status'
     ]
     
-    # Prepare all data
+    # Prepare data rows
     rows = [headers]
     for lead in leads:
         rows.append(format_lead_for_sheet(lead))
     
-    # Batch update (much faster than individual updates)
-    worksheet.update(rows, 'A1')
+    # Batch update data
+    worksheet.update(rows, f'A{next_row}')
     
-    # Format header row
-    worksheet.format('A1:H1', {
+    # Format Header Row (Dark Gray)
+    worksheet.format(f'A{next_row}:H{next_row}', {
         'textFormat': {'bold': True},
-        'backgroundColor': {'red': 0.2, 'green': 0.2, 'blue': 0.2},
+        'backgroundColor': {'red': 0.8, 'green': 0.8, 'blue': 0.8},
         'horizontalAlignment': 'CENTER'
     })
     
-    # Freeze header row
-    worksheet.freeze(rows=1)
-    
-    # Auto-resize columns
-    worksheet.columns_auto_resize(0, 7)
+    # Auto-resize columns (careful not to resize too often if sheet is huge)
+    # worksheet.columns_auto_resize(0, 7)
     
     sheet_url = spreadsheet.url
     print(f"[*] Sheet URL: {sheet_url}")
