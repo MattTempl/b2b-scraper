@@ -126,6 +126,8 @@ Examples:
         type=str,
         help="Unique Job ID for status tracking"
     )
+    parser.add_argument("--industry", type=str, help="Industry name")
+    parser.add_argument("--location", type=str, help="Location name")
     
     args = parser.parse_args()
     
@@ -202,7 +204,13 @@ Examples:
             
         success = run_step(
             "Google Sheets Export",
-            [sys.executable, str(PUSH_SHEETS), "--input", input_file, "--sheet", sheet_name]
+            [
+                sys.executable, str(PUSH_SHEETS), 
+                "--input", input_file, 
+                "--sheet", sheet_name,
+                "--industry", args.industry or "",
+                "--location", args.location or ""
+            ]
         )
         if not success:
             print("\n[!] Pipeline stopped at Google Sheets export")

@@ -71,6 +71,8 @@ async def run_lead_gen(request: LeadGenRequest):
             query,
             "--limit", str(request.limit),
             "--sheet", sheet_name,
+            "--industry", request.industry,
+            "--location", request.location,
             "--skip-crawl",
             "--skip-verify",
         ]

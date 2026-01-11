@@ -116,7 +116,7 @@ def format_lead_for_sheet(lead: dict) -> list:
     ]
 
 
-def push_to_sheets(leads: list, sheet_name: str) -> str:
+def push_to_sheets(leads: list, sheet_name: str, industry: str = None, location: str = None) -> str:
     """
     Push leads to Google Sheets.
     
@@ -142,7 +142,14 @@ def push_to_sheets(leads: list, sheet_name: str) -> str:
     
     # 1. Add Separator / Title Row
     timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-    title_row_content = [f"SEARCH: {timestamp} - Found {len(leads)} leads"] + [""] * 7
+    
+    # Construct descriptive title
+    if industry and location:
+        title_text = f"SEARCH: {industry} in {location} | {timestamp} | Found {len(leads)} leads"
+    else:
+        title_text = f"SEARCH: {timestamp} - Found {len(leads)} leads"
+        
+    title_row_content = [title_text] + [""] * 7
     
     worksheet.update(f'A{next_row}', [title_row_content])
     
@@ -202,10 +209,12 @@ def main():
     parser = argparse.ArgumentParser(description="Push leads to Google Sheets")
     parser.add_argument("--input", type=str, default=str(INPUT_FILE), help="Input JSON file")
     parser.add_argument("--sheet", type=str, required=True, help="Name of the Google Sheet")
+    parser.add_argument("--industry", type=str, help="Industry name")
+    parser.add_argument("--location", type=str, help="Location name")
     args = parser.parse_args()
     
     leads = load_leads(Path(args.input))
-    sheet_url = push_to_sheets(leads, args.sheet)
+    sheet_url = push_to_sheets(leads, args.sheet, args.industry, args.location)
     
     print(f"\n[✓] Done! View your leads at:\n{sheet_url}")
     
